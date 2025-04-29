@@ -2,6 +2,8 @@ package Model;
 
 import java.util.Collection;
 import java.util.List;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 public class Board {
 
@@ -16,17 +18,17 @@ public class Board {
         return spaces;
     }
 
-    public GameStatusEnum gStatus(){
+    public GameStatusEnum getStatus(){
         if (spaces.stream().flatMap(Collection::stream).noneMatch(s -> !s.isFixed() && nonNull(s.getActual()))){
-            return NON_STARTED;
+            return GameStatusEnum.NON_STARTED;
         }
 
-        return spaces.stream().flatMap(Collection::stream).anyMatch(s -> isNull(s.getActual())) ? INCOMPLETE : COMPLETE;
+        return spaces.stream().flatMap(Collection::stream).anyMatch(s -> isNull(s.getActual())) ? GameStatusEnum.INCOMPLETE : GameStatusEnum.COMPLETE;
     }
 
     public boolean hasErrors(){
-        if(getStatus() == NOM_STARTED){
-            return false
+        if(getStatus() == GameStatusEnum.NON_STARTED){
+            return false;
         }
 
         return spaces.stream().flatMap(Collection::stream).anyMatch(s -> nonNull(s.getActual()) && !s.getActual().equals((s.getExpected())));
@@ -56,7 +58,7 @@ public class Board {
     }
 
     public boolean gameIsFinished(){
-        return !hasErrors() && gStatus() == COMPLETE;
+        return !hasErrors() && getStatus() == GameStatusEnum.COMPLETE;
     }
     
 }
