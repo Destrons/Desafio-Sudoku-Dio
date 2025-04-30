@@ -4,11 +4,13 @@ public class Space {
 
     private Integer actual;
     private final int expected;
-    private boolean fixed;
+    private final boolean fixed;
+    private int current;
 
-    public Space(final int expected, final boolean fixed) {
+    public Space(int expected, boolean fixed) {
         this.expected = expected;
         this.fixed = fixed;
+        this.current  = fixed ? expected : 0;
         
         if (fixed){
             actual = expected;
@@ -34,6 +36,14 @@ public class Space {
 
     public boolean isFixed(){
         return fixed;
+    }
+
+    public int getCurrent() {
+         return current; 
+    }
+
+    public void setCurrent(int current) {
+        if (!fixed) this.current = current;
     }
     
 }

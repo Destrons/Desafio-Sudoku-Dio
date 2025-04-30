@@ -1,16 +1,21 @@
 
 import Model.Board;
 import java.util.Scanner;
+import java.util.Set;
+
 import Model.Space;
 import java.util.stream.Stream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toMap;
 import static util.BoardTemplate.BOARD_TEMPLATE;
-
-import java.util.Map;
 
 public class Main {
 
@@ -21,11 +26,17 @@ public class Main {
     private final static int BOARD_LIMIT = 9;
 
     public static void main(String[] args) {
-        final var positions = Stream.of(args)
-            .collect(toMap(
-                k -> k.split(";")[0],
-                v -> v.split(";")[1]
-            ));
+        
+        final Map<String,String> positions;
+            if (args.length > 0) {
+                positions = Stream.of(args)
+                    .collect(toMap(
+                        k -> k.split(";")[0],
+                        v -> v.split(";")[1]
+                    ));
+            } else {
+                positions = generatePuzzle(40);
+            }
 
         var option = -1;
         while (true){
@@ -82,17 +93,19 @@ public class Main {
 
         List<List<Space>> spaces = new ArrayList<>();
         for (int i = 0; i < BOARD_LIMIT; i++){
-            spaces.add(new ArrayList<>());
+            List<Space> row = new ArrayList<>();
             for (int j = 0; j < BOARD_LIMIT; j++){
-                var positionConfig = positions.get("%s,%s".formatted(i, j));
-                var expected = Integer.parseInt(positionConfig.split(",")[0]);
-                var fixed = Boolean.parseBoolean(positionConfig.split(",")[1]);
-                var currentSpace = new Space(expected, fixed);
-                spaces.get(i).add(currentSpace);
+                var cfg      = positions.get("%s,%s".formatted(i, j));
+                var parts    = cfg.split(",");
+                var expected = Integer.parseInt(parts[0]);
+                var fixed    = Boolean.parseBoolean(parts[1]);
+                row.add(new Space(expected, fixed));
             }
-            board = new Board(spaces);
-            System.out.println("O jogo esta pronto para começar");
+            spaces.add(row);
         }
+        board = new Board(spaces);
+        System.out.println("O jogo está pronto para começar");
+        
     }
 
     private static void imputNumber() {
@@ -117,9 +130,9 @@ public class Main {
             System.out.println("O jogo ainda não foi iniciado!");
             return;
         }
-        System.out.println("Informe a coluna que deseja colocar o número:");
+        System.out.println("Informe a coluna que deseja Remover o número:");
         var col = runUntilGetValidNumber(0, 8);
-        System.out.println("Informe a linha que deseja colocar o número:");
+        System.out.println("Informe a linha que deseja Remover o número:");
         var row = runUntilGetValidNumber(0, 8);
 
         if(!board.clearValue(col, row)){
@@ -137,15 +150,15 @@ public class Main {
         var argsPos = 0;
         for (int i = 0; i < BOARD_LIMIT; i++){
             for (var col: board.getSpaces()){
-                args[argsPos ++] = " " + (isNull(col.get(i).getActual()) ? " " : col.get(i).getActual());
+                    args[argsPos ++] = " " + (isNull(col.get(i).getActual()) ? " " : col.get(i).getActual());
             }
-
-            System.out.println("Seu jogo se encontra da seguinte forma:");
-            System.out.printf((BOARD_TEMPLATE) + "$n", args);
-
         }
+        
+        System.out.println("Seu jogo se encontra da seguinte forma:");
+        System.out.printf((BOARD_TEMPLATE) + "$n", args);
 
     }
+
     private static void showGameStatus() {
         if(isNull(board)){
             System.out.println("O jogo ainda não foi iniciado!");
@@ -203,4 +216,56 @@ public class Main {
         }
         return current;
     }
+
+    private static Map<String,String> generatePuzzle(int removeCount) {
+        final int N = 9;
+        int[][] solution = new int[N][N];
+        fillCell(solution, 0, 0);
+
+        List<Integer> all = new ArrayList<>();
+        for (int i = 0; i < N*N; i++) all.add(i);
+        Collections.shuffle(all, new Random());
+        Set<Integer> toRemove = Set.copyOf(all.subList(0, removeCount));
+
+        Map<String,String> map = new HashMap<>();
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                int idx = i * N + j;
+                boolean fixed = !toRemove.contains(idx);
+                int val = fixed ? solution[i][j] : 0;
+                map.put(i + "," + j, val + "," + fixed);
+            }
+        }
+        return map;
+    }
+
+    private static boolean fillCell(int[][] b, int row, int col) {
+        final int N = 9;
+        if (row == N) return true;
+        int nextRow = (col == N-1) ? row+1 : row;
+        int nextCol = (col == N-1) ? 0 : col+1;
+        List<Integer> nums = new ArrayList<>();
+        for (int i = 1; i <= N; i++) nums.add(i);
+        Collections.shuffle(nums, new Random());
+        for (int n : nums) {
+            if (canPlace(b, row, col, n)) {
+                b[row][col] = n;
+                if (fillCell(b, nextRow, nextCol)) return true;
+                b[row][col] = 0;
+            }
+        }
+        return false;
+    }
+
+    private static boolean canPlace(int[][] b, int r, int c, int num) {
+        final int N = 9;
+        for (int i = 0; i < N; i++)
+            if (b[r][i] == num || b[i][c] == num) return false;
+        int br = (r/3)*3, bc = (c/3)*3;
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                if (b[br+i][bc+j] == num) return false;
+        return true;
+    }
+
 }
