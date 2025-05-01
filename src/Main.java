@@ -180,7 +180,7 @@ public class Main {
 
         System.out.println("Tem certeza que deseja limpar o jogo e perder o seu progresso? (S/N)");
         var confirm = scanner.next();
-        while (!confirm.equalsIgnoreCase("S") || !confirm.equalsIgnoreCase("N")){
+        while (!confirm.equalsIgnoreCase("S") && !confirm.equalsIgnoreCase("N")){
             System.out.println("Informe S para sim ou N para não");
             confirm = scanner.next();
         }
